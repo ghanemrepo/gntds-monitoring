@@ -1,0 +1,52 @@
+name: Backlog Item
+description: Tambah item ke PM backlog
+title: "[BACKLOG] <judul>"
+labels: ["type: backlog"]
+body:
+  - type: dropdown
+    id: repo
+    attributes:
+      label: Repo terkait
+      options:
+        - Frontend (rapidsk-web-app)
+        - Backend (dataspace)
+        - Keduanya
+        - Platform / Infra
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "critical"
+        - "high"
+        - "medium"
+        - "low"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Deskripsi
+      description: Apa yang perlu dikerjakan dan kenapa?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: input
+    id: target
+    attributes:
+      label: Target Sprint / Tanggal
+      placeholder: "Sprint 3 / 2026-06-15"

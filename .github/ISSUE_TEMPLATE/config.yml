@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Frontend Repo Issues
+    url: https://github.com/hendradi1187/rapidsk-web-app/issues/new/choose
+    about: Bug atau feature request untuk FE — buat di sana, bukan di sini
+  - name: Backend Repo Issues
+    url: https://github.com/hendradi1187/dataspace/issues/new/choose
+    about: Bug atau feature request untuk BE — buat di sana, bukan di sini

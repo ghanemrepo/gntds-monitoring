@@ -1,0 +1,96 @@
+name: Weekly PM Digest
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'   # Monday 02:00 UTC = 09:00 WIB
+  workflow_dispatch:        # manual trigger
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  digest:
+    name: Generate PM weekly digest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and post digest
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const today    = new Date().toISOString().slice(0, 10);
+            const weekAgo  = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+
+            // ── Read activity log ────────────────────────────────────────────
+            let allLines = [];
+            try {
+              const raw = fs.readFileSync('logs/ACTIVITY_LOG.md', 'utf8');
+              allLines = raw.split('\n')
+                .filter(l => l.startsWith('|') && !l.includes('---') && !l.match(/Waktu|---/));
+            } catch(e) {}
+
+            const pushLines   = allLines.filter(l => l.includes('📤 push'));
+            const prOpenLines = allLines.filter(l => l.includes('pr_opened'));
+            const prMergeLines = allLines.filter(l => l.includes('pr_merged'));
+            const recentLines = allLines.slice(-30);
+
+            // ── Read changelog ───────────────────────────────────────────────
+            let releases = [];
+            try {
+              const cl = fs.readFileSync('changelogs/CHANGELOG.md', 'utf8');
+              releases = (cl.match(/^## \[.+\].+$/gm) || []).slice(0, 5);
+            } catch(e) {}
+
+            // ── Build markdown ───────────────────────────────────────────────
+            const body = [
+              `## 📊 PM Weekly Digest — ${today}`,
+              `**Period:** ${weekAgo} → ${today} (WIB)  `,
+              `**Repos tracked:** hendradi1187/rapidsk-web-app · hendradi1187/dataspace`,
+              '',
+              '---',
+              '',
+              '### 📈 All-time Activity Totals',
+              '| Metric | Count |',
+              '|--------|-------|',
+              `| Branch pushes | ${pushLines.length} |`,
+              `| PRs opened | ${prOpenLines.length} |`,
+              `| PRs merged | ${prMergeLines.length} |`,
+              '',
+              '---',
+              '',
+              '### 🚀 Latest Releases',
+              releases.length
+                ? releases.map(r => `- ${r}`).join('\n')
+                : '_No releases yet._',
+              '',
+              '---',
+              '',
+              '### 📝 Recent Activity (last 30 events)',
+              '| Time (UTC) | Repo | Event | Ref / PR | Author | Detail |',
+              '|------------|------|-------|----------|--------|--------|',
+              recentLines.length
+                ? recentLines.join('\n')
+                : '| — | — | — | — | — | _No activity recorded yet_ |',
+              '',
+              '---',
+              '',
+              '### 🗂 Backlog',
+              `Open backlog items: [View Issues](https://github.com/${context.repo.owner}/${context.repo.repo}/issues?q=is%3Aopen+label%3A%22type%3A+backlog%22)`,
+              '',
+              '---',
+              `_Auto-generated · [gntds-monitoring](https://github.com/${context.repo.owner}/${context.repo.repo}) · ${new Date().toISOString()}_`,
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `📊 PM Weekly Digest — ${today}`,
+              body,
+              labels: ['type: report'],
+            });
+
+            console.log(`Digest issue created for week ending ${today}`);

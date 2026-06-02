@@ -1,0 +1,49 @@
+# Labels untuk GitHub Issues di monitoring hub
+
+- name: "type: report"
+  color: "0075ca"
+  description: "Auto-generated weekly digest report"
+
+- name: "type: backlog"
+  color: "e4e669"
+  description: "PM backlog item"
+
+- name: "type: incident"
+  color: "d73a4a"
+  description: "Production incident or critical issue"
+
+- name: "repo: frontend"
+  color: "bfd4f2"
+  description: "Related to rapidsk-web-app (FE)"
+
+- name: "repo: backend"
+  color: "bfd4f2"
+  description: "Related to dataspace (BE)"
+
+- name: "priority: critical"
+  color: "b60205"
+  description: "Must address immediately"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "High priority"
+
+- name: "priority: medium"
+  color: "e4e669"
+  description: "Medium priority"
+
+- name: "priority: low"
+  color: "c2e0c6"
+  description: "Low priority"
+
+- name: "status: in-progress"
+  color: "fbca04"
+  description: "Currently being worked on"
+
+- name: "status: blocked"
+  color: "e11d48"
+  description: "Blocked"
+
+- name: "status: done"
+  color: "0e8a16"
+  description: "Completed"
