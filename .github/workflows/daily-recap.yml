@@ -1,0 +1,104 @@
+name: Daily Recap
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 10:00 UTC = 17:00 WIB, every day
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  recap:
+    name: Generate daily recap
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and post recap
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const today   = new Date().toISOString().slice(0, 10);
+            const dayAgo  = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+            // ── Read activity log ────────────────────────────────────────────
+            let allLines = [];
+            try {
+              const raw = fs.readFileSync('logs/ACTIVITY_LOG.md', 'utf8');
+              allLines = raw.split('\n')
+                .filter(l => l.startsWith('|') && !l.match(/Waktu|---/));
+            } catch(e) {}
+
+            // Filter hanya aktivitas hari ini (UTC)
+            const todayLines = allLines.filter(l => l.includes(today));
+
+            const todayPush   = todayLines.filter(l => l.includes('📤 push'));
+            const todayPROpen = todayLines.filter(l => l.includes('pr_opened'));
+            const todayPRMrg  = todayLines.filter(l => l.includes('pr_merged'));
+
+            // ── Read changelog ───────────────────────────────────────────────
+            let releases = [];
+            try {
+              const cl = fs.readFileSync('changelogs/CHANGELOG.md', 'utf8');
+              releases = (cl.match(/^## \[.+\].+$/gm) || []).slice(0, 3);
+            } catch(e) {}
+
+            // Skip jika tidak ada aktivitas hari ini
+            if (todayLines.length === 0) {
+              console.log('No activity today, skipping recap issue.');
+              return;
+            }
+
+            // ── Build markdown ───────────────────────────────────────────────
+            const body = [
+              `## 📅 Daily Recap — ${today}`,
+              `**Period:** ${dayAgo} → ${today} (WIB)  `,
+              `**Repos tracked:** hendradi1187/rapidsk-web-app · hendradi1187/dataspace`,
+              '',
+              '---',
+              '',
+              '### 📈 Activity Today',
+              '| Metric | Count |',
+              '|--------|-------|',
+              `| Branch pushes | ${todayPush.length} |`,
+              `| PRs opened | ${todayPROpen.length} |`,
+              `| PRs merged | ${todayPRMrg.length} |`,
+              '',
+              '---',
+              '',
+              '### 🚀 Latest Releases',
+              releases.length
+                ? releases.map(r => `- ${r}`).join('\n')
+                : '_No releases yet._',
+              '',
+              '---',
+              '',
+              `### 📝 Today's Activity`,
+              '| Time (UTC) | Repo | Event | Ref / PR | Author | Detail |',
+              '|------------|------|-------|----------|--------|--------|',
+              todayLines.length
+                ? todayLines.join('\n')
+                : '| — | — | — | — | — | _No activity today_ |',
+              '',
+              '---',
+              '',
+              '### 🗂 Backlog',
+              `Open backlog items: [View Issues](https://github.com/${context.repo.owner}/${context.repo.repo}/issues?q=is%3Aopen+label%3A%22type%3A+backlog%22)`,
+              '',
+              '---',
+              `_Auto-generated · [gntds-monitoring](https://github.com/${context.repo.owner}/${context.repo.repo}) · ${new Date().toISOString()}_`,
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `📅 Daily Recap — ${today}`,
+              body,
+              labels: ['type: report'],
+            });
+
+            console.log(`Daily recap created for ${today}`);
